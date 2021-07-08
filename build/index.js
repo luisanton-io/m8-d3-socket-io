@@ -28,7 +28,7 @@ var server_1 = __importStar(require("./server"));
 // import dotenv from "dotenv"
 // dotenv.config()
 process.env.TS_NODE_DEV && require("dotenv").config();
-var port = 3030;
+var port = process.env.PORT || 3030;
 var ATLAS_URL = process.env.ATLAS_URL;
 if (!ATLAS_URL)
     throw new Error("No Atlas URL specified");
