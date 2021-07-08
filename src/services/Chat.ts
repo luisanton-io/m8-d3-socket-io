@@ -1,5 +1,5 @@
 import express from "express"
-import RoomModel from "../models/Room/index.js"
+import RoomModel from "../models/Room"
 
 const chatRouter = express.Router()
 
