@@ -2,10 +2,16 @@ import cors from "cors"
 import express from "express"
 import { createServer } from "http"
 import { Server } from "socket.io"
-import chatRouter from "./services/Chat.js"
-import list from "express-list-endpoints"
-import mongoose from "mongoose"
-import RoomModel from "./models/Room/index.js"
+import RoomModel from "./models/Room"
+import chatRouter from "./services/Chat"
+import usersRouter from "./services/Users"
+import shared from "./shared"
+
+
+// import dotenv from "dotenv"
+// dotenv.config()
+
+process.env.TS_NODE_DEV && require("dotenv").config()
 
 const app = express();
 app.use(cors())
@@ -15,7 +21,41 @@ app.use(express.json())
 const server = createServer(app);
 const io = new Server(server, { allowEIO3: true })
 
-let onlineUsers = []
+type Room = "blue" | "red"
+
+export interface ActiveUser {
+    username: string,
+    id: string,
+    room: Room
+}
+
+// interface IActiveUserExtendedWithFullName extends IActiveUser {
+//     fullName: string
+// }
+
+// class ActiveUser implements IActiveUserExtendedWithFullName {
+//     constructor(
+//         public username: string,
+//         public id: string,
+//         public room: Room,
+//         public fullName: string
+//     ){}
+// }
+
+// const myUser = new ActiveUser("myusername", 'id123', "red", "fullnamestring")
+
+// myUser is
+/* 
+{
+    username: "myusername",
+    id: "id123",
+    room: "red",
+    fullname: "fullnamestring"
+}
+*/
+
+shared.onlineUsers = [] as ActiveUser[]
+
 
 // Add "event listeners" on your socket when it's connecting
 io.on("connection", socket => {
@@ -30,7 +70,7 @@ io.on("connection", socket => {
     // })
 
     socket.on("setUsername", ({ username, room }) => {
-        onlineUsers.push({ username: username, id: socket.id, room })
+        shared.onlineUsers.push({ username: username, id: socket.id, room })
 
         //.emit - echoing back to itself
         socket.emit("loggedin")
@@ -47,8 +87,8 @@ io.on("connection", socket => {
     })
 
     socket.on("disconnect", () => {
-        console.log("Disconnecting...")
-        onlineUsers = onlineUsers.filter(user => user.id !== socket.id)
+        console.log("Disconnecting...");
+        shared.onlineUsers = shared.onlineUsers.filter((user: ActiveUser) => user.id !== socket.id)
     })
 
     socket.on("sendMessage", async ({ message, room }) => {
@@ -64,23 +104,9 @@ io.on("connection", socket => {
 })
 
 
-app.get('/online-users', (req, res) => {
-    res.status(200).send({ onlineUsers })
-})
+app.use('/users', usersRouter)
 
 app.use('/', chatRouter)
 
-
-const port = 3030
-
-mongoose
-    .connect(process.env.ATLAS_URL, { useNewUrlParser: true })
-    .then(() => {
-        console.log("Connected to mongo")
-        // Listen using the httpServer -
-        // listening with the express instance will start a new one!!
-        server.listen(port, () => {
-            console.log(list(app))
-            console.log("Server listening on port " + port)
-        })
-    })
+export { app }
+export default server
