@@ -8,7 +8,7 @@
     "watch": "jest --watchAll",
     "__dev": "nodemon -r dotenv/config ./src",
     "dev": "ts-node-dev ./src",
-    "start": "tsc && node ./build"
+    "start": "node ./build"
   },
   "keywords": [],
   "author": "",
